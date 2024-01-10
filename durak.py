@@ -1,6 +1,6 @@
 import random
 from loguru import logger
-kos = ''
+kos = {}
 tasks = []
 deck = []
 names = []  # имена игроков
@@ -17,7 +17,7 @@ logger.add('for_durak.log', format="{time} {level} {message}", level='DEBUG')
 @logger.catch
 def hi():  # функция для заполнения names, players_cards
     global deck, kos, tasks
-    if input("сколько карт будет у вас в колоде?") == 36:
+    if int(input("сколько карт будет у вас в колоде?")) == 36:
         random.shuffle(deck_36)
         deck = deck_36
     else:
@@ -37,17 +37,49 @@ def hi():  # функция для заполнения names, players_cards
 
 @logger.catch
 def turn(player):  # универсальная функция для хода
+    table_cards = []
+    for i in range(len(names)):
+        for o in range(6 - len(players_cards[player])):
+            players_cards[player].append(deck[0])
+            deck.pop(0)
     print('\n' * 100, f"очередь игрока {names[player]}", sep='')
     print('ваши карты:')
     for i in players_cards[player]:
         mast, number = i.values()
         print(number, mast, sep=' ', end='\n')
+    print('козырь - ' + list(kos.values())[0])
+    for i in range(len(names)):
+        if i == player:
+            tasks[i] = 'attack'
+        elif i == player + 1:
+            tasks[i] = 'defend'
+        else:
+            tasks[i] = 'dop_attack'
 
+    if tasks[player] == 'attack':
+        try:
+            print(f'вы играете под игрока {names[player + 1]}')
+        except IndexError:
+            print(f'вы играете под игрока {names[0]}')
+        while True:
+            attack_cards = input('из своих карт, выберете какой хотите сходить')
+            if attack_cards == 'пасс':
+                break
+            else:
+                attack_cards = int(attack_cards)
+            table_cards.append(players_cards[player][attack_cards - 1])
+            players_cards[player].pop(attack_cards - 1)
+            for i in players_cards[player]:
+                mast, number = i.values()
+                print(number, mast, sep=' ', end='\n')
 
 with open('разрешение_на_игру.txt') as file:
     if any(i == '____ok____alright____\n' for i in file):
         hi()
         for i in range(len(names)):
+            if len(over_players) > len(names) - 2:
+                break
             turn(i)
+        print(f'игра законченна, дураком остался {names[0]}')
     else:
         print('игра запрещена')
