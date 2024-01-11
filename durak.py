@@ -10,7 +10,7 @@ deck_36 = [{'suit': 'черви', 'value': 6}, {'suit': 'черви', 'value': 7
 players_cards = []  # карты на руках у игроков
 table_cards = []  # карты на столе
 over_players = []  # вышедшие игроки
-
+otb_table_cards = []
 logger.add('for_durak.log', format="{time} {level} {message}", level='DEBUG')
 
 
@@ -40,6 +40,15 @@ def turn(player):  # универсальная функция для хода
     table_cards = []
     for i in range(len(names)):
         for o in range(6 - len(players_cards[player])):
+            if len(deck) == 0 and len(players_cards[i]) == 0:
+                names.pop(i)
+                players_cards.pop(i)
+                tasks.pop()
+                over_players.append(i)
+                return 0
+            elif len(deck) == 0:
+                print('в колоде не осталось карт')
+                break
             players_cards[player].append(deck[0])
             deck.pop(0)
     print('\n' * 100, f"очередь игрока {names[player]}", sep='')
@@ -55,31 +64,73 @@ def turn(player):  # универсальная функция для хода
             tasks[i] = 'defend'
         else:
             tasks[i] = 'dop_attack'
-
-    if tasks[player] == 'attack':
-        try:
-            print(f'вы играете под игрока {names[player + 1]}')
-        except IndexError:
-            print(f'вы играете под игрока {names[0]}')
-        while True:
-            attack_cards = input('из своих карт, выберете какой хотите сходить')
-            if attack_cards == 'пасс':
-                break
-            else:
-                attack_cards = int(attack_cards)
-            table_cards.append(players_cards[player][attack_cards - 1])
-            players_cards[player].pop(attack_cards - 1)
-            for i in players_cards[player]:
-                mast, number = i.values()
-                print(number, mast, sep=' ', end='\n')
-
+    # первоначальная атака
+    try:
+        print(f'вы играете под игрока {names[player + 1]}')
+    except IndexError:
+        print(f'вы играете под игрока {names[0]}')
+    while True:
+        attack_cards = input('из своих карт, выберете какой хотите сходить и введите ее порядковый номер или введите пасс')
+        if attack_cards == 'пасс':
+            break
+        else:
+            attack_cards = int(attack_cards)
+        table_cards.append(players_cards[player][attack_cards - 1])
+        players_cards[player].pop(attack_cards - 1)
+        print('теперь у вас на руках:')
+        for i in players_cards[player]:
+            mast, number = i.values()
+            print(number, mast, sep=' ', end='\n')
+    player2 = player + 1 if player + 1 < len(names) else 0
+    # первоначальная защита
+    print('\n' * 100, f"очередь игрока {names[player2]}", sep='')
+    print('ваши карты:')
+    for i in players_cards[player2]:
+        mast, number = i.values()
+        print(number, mast, sep=' ', end='\n')
+    print('козырь - ' + list(kos.values())[0])
+    print('ваше действие - защита')
+    print('вы должны покрыть эти карты', end='')
+    for i in table_cards:
+        mast, card = i.values()
+        print(mast, card)
+    while True:
+        otb_card = input('из карт на столе выберете какую вы хотите покрыть и введите ее порядковый номер или введите беру')
+        if otb_card == 'беру':
+            for i in table_cards:
+                players_cards[player2].append(i)
+            return 0
+        else:
+            otb_card = int(otb_card)
+            your_card = int(input('выберете из своих карт какой вы хотите покрыться и введите ее номер'))
+            otb_table_cards.append(table_cards[otb_card - 1])
+            otb_table_cards.append(players_cards[player2][your_card - 1])
+            table_cards.pop(otb_card - 1)
+            players_cards[player2].pop(your_card - 1)
+        if len(table_cards) == 0:
+            break
 with open('разрешение_на_игру.txt') as file:
     if any(i == '____ok____alright____\n' for i in file):
         hi()
-        for i in range(len(names)):
+        for i in range(10000):
             if len(over_players) > len(names) - 2:
                 break
-            turn(i)
+            for k in range(len(names)):
+                if k > len(names):
+                    turn((k + 1) % len(names))
+                else:
+                    turn(k % len(names))
         print(f'игра законченна, дураком остался {names[0]}')
     else:
         print('игра запрещена')
+
+
+
+
+
+
+
+
+
+
+
