@@ -17,7 +17,7 @@ players_pass = []
 logger.add('for_durak.log', format="{time} {level} {message}", level='DEBUG')
 
 
-@logger.catch
+
 def hi():  # функция для заполнения names, players_cards
     global deck, kos, tasks
     if int(input("сколько карт будет у вас в колоде?")) == 36:
@@ -46,7 +46,7 @@ def print_cards(player):
         print(str(players_cards[player].index(i) + 1) + ' -', number, mast, sep=' ')
 
 
-@logger.catch()
+
 def print_char(player, task):
     print('\n' * 100, f"очередь игрока {names[player]}", sep='')
     print('ваше действие - ' + task)
@@ -56,33 +56,35 @@ def print_char(player, task):
     print("сейчас в колоде " + str(len(deck)) + " карты")
 
 
-@logger.catch
+
 def turn(player):  # универсальная функция для хода
+    for i in range(len(names)):
+        for o in range(6 - len(players_cards[i])):
+            if len(deck) == 0 and len(players_cards[i]) == 0:
+                names.pop(i)
+                players_cards.pop(i)
+                tasks.pop(i)
+                ber_stat.pop(i)
+                over_players.append(i)
+                return 0
+            elif len(deck) == 0:
+                print('в колоде не осталось карт')
+                break
+            players_cards[i].append(deck[0])
+            deck.pop(0)
     if ber_stat[player] == False:
         table_cards = []
         otb_table_cards = []
         players_pass = []
         for i in range(len(names)):
             players_pass.append(0)
-        for i in range(len(names)):
-            for o in range(6 - len(players_cards[i])):
-                if len(deck) == 0 and len(players_cards[i]) == 0:
-                    names.pop(i)
-                    players_cards.pop(i)
-                    tasks.pop(i)
-                    ber_stat.pop(i)
-                    over_players.append(i)
-                    return 0
-                elif len(deck) == 0:
-                    print('в колоде не осталось карт')
-                    break
-                players_cards[i].append(deck[0])
-                deck.pop(0)
         print_char(player, 'атака')
         for i in range(len(names)):
             if i == player:
                 tasks[i] = 'attack'
             elif i == player + 1:
+                tasks[i] = 'defend'
+            elif player + 1 == len(names) and i == 0:
                 tasks[i] = 'defend'
             else:
                 tasks[i] = 'dop_attack'
@@ -91,7 +93,7 @@ def turn(player):  # универсальная функция для хода
         print(f'вы играете под игрока {names[player2]}')
         while True:
             attack_cards = input('из своих карт, выберете какой хотите сходить и введите ее порядковый номер или введите пасс')
-            if attack_cards == 'пасс':
+            if attack_cards == 'пасс' or len(players_cards[player2]) > 0 and len(otb_table_cards) // 2 + len(table_cards) > len(players_cards[player2]):
                 break
             else:
                 attack_cards = int(attack_cards)
@@ -110,6 +112,8 @@ def turn(player):  # универсальная функция для хода
             if otb_card == 'беру':
                 for i in table_cards:
                     players_cards[player2].append(i)
+                for i in otb_table_cards:
+                    players_cards[player2].append(i)
                 ber_stat[player2] = True
                 return 0
             else:
@@ -124,7 +128,9 @@ def turn(player):  # универсальная функция для хода
             if len(table_cards) == 0:
                 break
         # остальной ход
-        while players_pass.count(1) != len(names) - 1 and len(players_cards[player2]) > 0:
+        print(players_pass.count(1) != len(names) - 1, len(players_cards[player2]) > 0, len(otb_table_cards) // 2 + len(table_cards) > 5)
+        while players_pass.count(1) != len(names) - 1 and len(players_cards[player2]) > 0 and len(otb_table_cards) // 2 + len(table_cards) < len(players_cards[player2]):
+            players_pass = [0 for i in range(len(names))]
             print_char(player, 'дополнительная атака')
             print('на столе лежат эти карты:')
             for i in otb_table_cards:
@@ -133,8 +139,7 @@ def turn(player):  # универсальная функция для хода
             print(f'вы играете под игрока {names[player2]}')
             while True:
                 attack_cards = input('из своих карт, выберете какой хотите сходить и введите ее порядковый номер или введите пасс')
-                print(table_cards, len(table_cards))
-                if attack_cards == 'пасс':
+                if attack_cards == 'пасс' or len(players_cards[player2]) > 0 and len(otb_table_cards) // 2 + len(table_cards) > 5:
                     if len(table_cards) == 0:
                         players_pass[player] = 1
                     break
@@ -159,7 +164,7 @@ def turn(player):  # универсальная функция для хода
                     print(f'вы играете под игрока {names[player2]}')
                     while True:
                         attack_cards = input('из своих карт, выберете какой хотите сходить и введите ее порядковый номер или введите пасс')
-                        if attack_cards == 'пасс':
+                        if attack_cards == 'пасс' or len(players_cards[player2]) > 0 and len(otb_table_cards) // 2 + len(table_cards) > 5:
                             if len(table_cards) == 0:
                                 players_pass[iterate] = 1
                             break
@@ -175,33 +180,33 @@ def turn(player):  # универсальная функция для хода
                         for i in otb_table_cards:
                             mast, number = i.values()
                             print(number, mast, sep=' ', end='\n')
-                    print_char(player2, 'защита')
-                    while True:
-                        print('вы должны покрыть эти карты', end='\n')
-                        for i in table_cards:
-                            mast, card = i.values()
-                            print(mast, card)
-                        otb_card = input(
-                            'из карт на столе выберете какую вы хотите покрыть и введите ее порядковый номер или введите беру')
-                        if otb_card == 'беру':
-                            for i in table_cards:
-                                players_cards[player2].append(i)
-                            ber_stat[player2] = True
-                            return 0
-                        else:
-                            otb_card = int(otb_card)
-                            your_card = int(
-                                input('выберете из своих карт какой вы хотите покрыться и введите ее номер'))
-                            otb_table_cards.append(table_cards[otb_card - 1])
-                            otb_table_cards.append(players_cards[player2][your_card - 1])
-                            table_cards.pop(otb_card - 1)
-                            players_cards[player2].pop(your_card - 1)
-                            print('ваши карты:')
-                            print_cards(player2)
-                        if len(table_cards) == 0:
-                            break
-        else:
-            ber_stat[player] = False
+            print_char(player2, 'защита')
+            while True:
+                print('вы должны покрыть эти карты', end='\n')
+                for i in table_cards:
+                    mast, card = i.values()
+                    print(mast, card)
+                otb_card = input('из карт на столе выберете какую вы хотите покрыть и введите ее порядковый номер или введите беру')
+                if otb_card == 'беру':
+                    for i in table_cards:
+                        players_cards[player2].append(i)
+                    for i in otb_table_cards:
+                        players_cards[player2].append(i)
+                    ber_stat[player2] = True
+                    return 0
+                else:
+                    otb_card = int(otb_card)
+                    your_card = int(input('выберете из своих карт какой вы хотите покрыться и введите ее номер'))
+                    otb_table_cards.append(table_cards[otb_card - 1])
+                    otb_table_cards.append(players_cards[player2][your_card - 1])
+                    table_cards.pop(otb_card - 1)
+                    players_cards[player2].pop(your_card - 1)
+                    print('ваши карты:')
+                    print_cards(player2)
+                if len(table_cards) == 0:
+                    break
+    else:
+        ber_stat[player] = False
 
 with open('разрешение_на_игру.txt') as file:
     if any(i == '____ok____alright____\n' for i in file):
@@ -213,7 +218,7 @@ with open('разрешение_на_игру.txt') as file:
                 if k > len(names):
                     turn((k + 1) % len(names))
                 else:
-                    turn(k % len(names))
+                    turn(k)
         print(f'игра законченна, дураком остался {names[0]}')
     else:
         print('игра запрещена')
