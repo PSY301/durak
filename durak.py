@@ -69,7 +69,6 @@ def turn(player):  # универсальная функция для хода
     for i in range(len(names)):
         for o in range(6 - len(players_cards[i])):
             if len(deck) == 0:
-                print('в колоде не осталось карт')
                 break
             players_cards[i].append(deck[0])
             deck.pop(0)
@@ -236,7 +235,7 @@ def turn(player):  # универсальная функция для хода
                     print_cards(player2)
                 if len(table_cards) == 0:
                     break
-            print(players_pass.count(1) != len(names) - 1, len(players_cards[player2]) > 0, len(otb_table_cards) // 2 + len(table_cards) < qwe + 1)
+
     else:
         ber_stat[player] = False
 
@@ -254,16 +253,15 @@ with open('разрешение_на_игру.txt') as file:
                         break
                 turn(need_name)
                 dif_names = []
-                print('-' * 50)
+
                 for u in range(1, len(names)):
                     if k + u - len(new_over_players) >= 0:
                         next_name = names[need_name + u - len(new_over_players)] if need_name + u - len(new_over_players) < len(names) else names[0]
                     else:
                         next_name = names[len(names) + (need_name + u - len(new_over_players))]
-                    print(next_name)
+
                     dif_names.append(next_name)
-                print('-' * 50)
-                print(new_over_players, k, u)
+
         try:
             print(f'игра законченна, дураком остался {names[0]}')
         except IndexError:
